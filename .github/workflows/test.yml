@@ -1,0 +1,38 @@
+# Installs the formulas a push or pull request changes, on macOS and Linux, and runs them.
+name: Test
+
+on:
+  push:
+    branches: [main]
+    paths: ["Formula/**", ".github/workflows/test.yml"]
+  pull_request:
+    paths: ["Formula/**", ".github/workflows/test.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  formulas:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: Homebrew/actions/setup-homebrew@main
+      - name: Install and run each formula
+        run: |
+          brew tap meteroid-oss/tap "$GITHUB_WORKSPACE"
+          shopt -s nullglob
+          formulas=(Formula/*.rb)
+          if [ ${#formulas[@]} -eq 0 ]; then
+            echo "::notice::No formula yet: the first release of a tool writes one"
+            exit 0
+          fi
+          for file in "${formulas[@]}"; do
+            name=$(basename "$file" .rb)
+            brew install "meteroid-oss/tap/$name"
+            "$(brew --prefix)/bin/$name" --version
+          done
