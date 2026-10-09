@@ -21,10 +21,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
+      # Also links this checkout as the meteroid-oss/tap tap.
       - uses: Homebrew/actions/setup-homebrew@main
       - name: Install and run each formula
         run: |
-          brew tap meteroid-oss/tap "$GITHUB_WORKSPACE"
           shopt -s nullglob
           formulas=(Formula/*.rb)
           if [ ${#formulas[@]} -eq 0 ]; then
